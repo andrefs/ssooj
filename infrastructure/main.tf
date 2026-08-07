@@ -160,8 +160,8 @@ resource "aws_iam_role_policy" "worker" {
 
 data "archive_file" "presign_zip" {
   type        = "zip"
-  source_file = "${path.module}/../../presign-url/bootstrap"
-  output_path = "${path.module}/artifacts/presign-url.zip"
+  source_file = abspath("${path.module}/../presign-url/bootstrap")
+  output_path = abspath("${path.module}/artifacts/presign-url.zip")
 }
 
 resource "aws_lambda_function" "presign" {
@@ -217,8 +217,8 @@ resource "aws_lambda_permission" "apigw_invoke_presign" {
 
 data "archive_file" "poppler_layer" {
   type        = "zip"
-  source_dir  = "${path.module}/layer/opt"
-  output_path = "${path.module}/artifacts/poppler-layer.zip"
+  source_dir  = abspath("${path.module}/layer/opt")
+  output_path = abspath("${path.module}/artifacts/poppler-layer.zip")
 }
 
 resource "aws_lambda_layer_version" "poppler" {
@@ -231,8 +231,8 @@ resource "aws_lambda_layer_version" "poppler" {
 
 data "archive_file" "worker_zip" {
   type        = "zip"
-  source_file = "${path.module}/../../receipt-worker/bootstrap"
-  output_path = "${path.module}/artifacts/receipt-worker.zip"
+  source_file = abspath("${path.module}/../receipt-worker/bootstrap")
+  output_path = abspath("${path.module}/artifacts/receipt-worker.zip")
 }
 
 resource "aws_lambda_function" "worker" {
