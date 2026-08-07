@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ssooj - Upload Receipts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      padding: 48px;
+      width: 520px;
+      max-width: 92vw;
+    }
+    .card-header { margin-bottom: 32px; }
+    .card-header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+    .card-header p {
+      color: #6b7280;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+
+    .drop-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: #fafbfc;
+      position: relative;
+    }
+    .drop-zone:hover { border-color: #9ca3af; background: #f3f4f6; }
+    .drop-zone.drag-over {
+      border-color: #3b82f6;
+      background: #eff6ff;
+      border-style: solid;
+    }
+    .drop-zone-icon {
+      font-size: 40px;
+      line-height: 1;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+    .drop-zone-text { font-size: 15px; color: #374151; }
+    .drop-zone-text span { color: #3b82f6; font-weight: 600; text-decoration: underline; cursor: pointer; }
+    .drop-zone-hint { font-size: 13px; color: #9ca3af; margin-top: 6px; }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .file-list { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #f9fafb;
+      border-radius: 10px;
+      font-size: 14px;
+      transition: background .2s;
+    }
+    .file-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item-size { color: #9ca3af; font-size: 13px; white-space: nowrap; }
+    .file-item-status {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .file-item-status.pending { background: #e5e7eb; }
+    .file-item-status.uploading { background: #dbeafe; color: #3b82f6; }
+    .file-item-status.done { background: #d1fae5; color: #059669; }
+    .file-item-status.error { background: #fee2e2; color: #dc2626; }
+    .file-item .remove-btn {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 4px;
+    }
+    .file-item .remove-btn:hover { color: #dc2626; }
+
+    .upload-btn {
+      width: 100%;
+      padding: 14px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background .2s, opacity .2s;
+    }
+    .upload-btn:hover:not(:disabled) { background: #2563eb; }
+    .upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+    .toast.visible { opacity: 1; }
+    .toast.success { background: #065f46; color: #fff; }
+    .toast.error { background: #991b1b; color: #fff; }
+    .toast { user-select: text; pointer-events: auto; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="card-header">
+      <h1>Upload Receipts</h1>
+      <p>Drop PDF files below to process them</p>
+    </div>
+
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">&#x1F4C4;</div>
+      <div class="drop-zone-text">Drag & drop PDFs here, or <span>choose files</span></div>
+      <div class="drop-zone-hint">Only PDF files are accepted</div>
+      <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <button class="upload-btn" id="uploadBtn" disabled>Upload all</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_ENDPOINT = 'https://API_ID.execute-api.eu-west-1.amazonaws.com/upload';
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const toast = document.getElementById('toast');
+
+    let files = [];
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      addFiles(Array.from(e.dataTransfer.files));
+    });
+    fileInput.addEventListener('change', () => {
+      addFiles(Array.from(fileInput.files));
+      fileInput.value = '';
+    });
+
+    function addFiles(newFiles) {
+      const pdfs = newFiles.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+      if (pdfs.length !== newFiles.length) {
+        showToast('Non-PDF files were ignored.', 'error');
+      }
+      for (const pdf of pdfs) {
+        if (!files.find(f => f.name === pdf.name && f.size === pdf.size)) {
+          files.push({ file: pdf, status: 'pending' });
+        }
+      }
+      renderFileList();
+    }
+
+    function renderFileList() {
+      if (files.length === 0) {
+        fileList.innerHTML = '';
+        uploadBtn.disabled = true;
+        return;
+      }
+      uploadBtn.disabled = false;
+      const allDone = files.every(f => f.status === 'done');
+      uploadBtn.textContent = allDone ? 'All uploaded' : 'Upload all';
+      uploadBtn.disabled = allDone;
+
+      fileList.innerHTML = files.map((f, i) => {
+        const size = f.file.size < 1024 * 1024
+          ? (f.file.size / 1024).toFixed(0) + ' KB'
+          : (f.file.size / (1024 * 1024)).toFixed(1) + ' MB';
+        const icons = { pending: '&#x2022;', uploading: '&#x21BB;', done: '&#x2713;', error: '&#x2717;' };
+        return `
+          <div class="file-item" data-index="${i}">
+            <div class="file-item-status ${f.status}">${icons[f.status]}</div>
+            <div class="file-item-name">${escapeHtml(f.file.name)}</div>
+            <div class="file-item-size">${size}</div>
+            ${f.status === 'pending' ? '<button class="remove-btn" data-index="' + i + '">&times;</button>' : ''}
+          </div>
+        `;
+      }).join('');
+
+      fileList.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.index);
+          files.splice(idx, 1);
+          renderFileList();
+        });
+      });
+    }
+
+    uploadBtn.addEventListener('click', async () => {
+      const toUpload = files.filter(f => f.status === 'pending');
+      if (toUpload.length === 0) return;
+
+      uploadBtn.disabled = true;
+
+      for (const f of toUpload) {
+        f.status = 'uploading';
+        renderFileList();
+
+        try {
+          const presignResp = await fetch(`${API_ENDPOINT}?name=${encodeURIComponent(f.file.name)}`, { method: 'POST' });
+          if (!presignResp.ok) throw new Error(`Presign failed (${presignResp.status})`);
+
+          const { uploadUrl } = await presignResp.json();
+
+          const uploadResp = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: f.file,
+            headers: { 'Content-Type': 'application/pdf' }
+          });
+          if (!uploadResp.ok) throw new Error(`Upload failed (${uploadResp.status})`);
+
+          f.status = 'done';
+        } catch (err) {
+          f.status = 'error';
+          showToast(`${f.file.name}: ${err.message}`, 'error');
+        }
+        renderFileList();
+      }
+
+      const succeeded = files.filter(f => f.status === 'done').length;
+      const failed = files.filter(f => f.status === 'error').length;
+      if (succeeded > 0) {
+        showToast(`${succeeded} receipt${succeeded > 1 ? 's' : ''} uploaded successfully`, 'success');
+      }
+    });
+
+    function showToast(msg, type) {
+      toast.textContent = msg;
+      toast.className = `toast visible ${type}`;
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove('visible'), 4000);
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+  </script>
+</body>
+</html>

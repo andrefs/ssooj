@@ -8,6 +8,16 @@ resource "aws_s3_bucket" "raw" {
   bucket = "ssooj-receipts-raw-${local.suffix}"
 }
 
+resource "aws_s3_bucket_cors_configuration" "raw" {
+  bucket = aws_s3_bucket.raw.id
+  cors_rule {
+    allowed_origins = ["*"]
+    allowed_methods = ["PUT", "POST"]
+    allowed_headers = ["Content-Type"]
+    max_age_seconds = 300
+  }
+}
+
 resource "aws_s3_bucket_versioning" "raw" {
   bucket = aws_s3_bucket.raw.id
   versioning_configuration {
@@ -193,9 +203,15 @@ resource "aws_apigatewayv2_integration" "presign" {
   payload_format_version = "1.0"
 }
 
-resource "aws_apigatewayv2_route" "upload" {
+resource "aws_apigatewayv2_route" "upload_post" {
   api_id    = aws_apigatewayv2_api.upload.id
   route_key = "POST /upload"
+  target    = "integrations/${aws_apigatewayv2_integration.presign.id}"
+}
+
+resource "aws_apigatewayv2_route" "upload_options" {
+  api_id    = aws_apigatewayv2_api.upload.id
+  route_key = "OPTIONS /upload"
   target    = "integrations/${aws_apigatewayv2_integration.presign.id}"
 }
 

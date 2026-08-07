@@ -1,5 +1,13 @@
-*.zip
-*.sum
+# Lambda build artifacts
 bootstrap
 *.pdf
 *.txt
+*.zip
+
+# Terraform
+infrastructure/.terraform/
+infrastructure/terraform.tfstate*
+infrastructure/artifacts/
+
+# Lambda layer
+infrastructure/layer/
