@@ -1,3 +1,5 @@
+package receipt
+
 type Item struct {
 	Category          string
 	VatCategory       string
@@ -27,6 +29,7 @@ type Receipt struct {
 	SavingCardUsed  bool
 	TotalSavingsAcc float64
 	ClientCard      string
+	Items           []Item
 	VatCategories   []VAT
 	VatNumber       string
 	EmailSubj       string

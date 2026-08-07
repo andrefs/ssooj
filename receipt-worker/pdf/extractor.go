@@ -5,21 +5,28 @@ import (
 	"io"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
-	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 )
 
 func ExtractText(data []byte) (string, error) {
-	conf := pdfcpu.NewDefaultConfiguration()
-	conf.Cmd = pdfcpu.EXTRACT
+	var result string
 
-	msg := ""
-	handler := func(page int, text string) {
-		msg += text + "\n"
+	digest := func(r io.Reader, _ int) error {
+		b, err := io.ReadAll(r)
+		if err != nil {
+			return err
+		}
+		result += string(b) + "\n"
+		return nil
 	}
 
-	err := api.ExtractPagesRaw(bytes.NewReader(data), conf, handler)
+	conf := model.NewDefaultConfiguration()
+	conf.Cmd = model.EXTRACTCONTENT
+
+	err := api.ExtractContent(bytes.NewReader(data), nil, digest, conf)
 	if err != nil {
 		return "", err
 	}
-	return msg, nil
+
+	return result, nil
 }
