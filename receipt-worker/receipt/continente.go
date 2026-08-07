@@ -36,6 +36,7 @@ var (
 	reContinentePay     = regexp.MustCompile(`^Cartao` + sp + `(.+?)` + spLong + price + `$`)
 	reContinenteVatHdr  = regexp.MustCompile(`^\s*%IVA` + sp + `Total Liq`)
 	reContinenteVatLine = regexp.MustCompile(`^` + v + sp + vatVal + `%` + sp + netVal + sp + ivaVal + sp + total + `$`)
+	reContinenteCardDisc = regexp.MustCompile(`^Desconto Cartao Utilizado` + sp + price + `$`)
 	reContinenteCard    = regexp.MustCompile(`Cartao cliente nº\s+(\S+)`)
 	reContinenteNIF     = regexp.MustCompile(`NIF:\s*PT(\d{9})`)
 	reContinenteCompra  = regexp.MustCompile(`COMPRA` + sp + price + `€`)
@@ -186,6 +187,11 @@ func (continenteParser) Parse(lines []string, r *Receipt) (*Receipt, error) {
 				r.Items = append(r.Items, *pendingItem)
 				pendingItem = nil
 			}
+			continue
+		}
+
+		if m := reContinenteCardDisc.FindStringSubmatch(trimmed); m != nil {
+			r.CardDiscount = parseFloat(m[1])
 			continue
 		}
 

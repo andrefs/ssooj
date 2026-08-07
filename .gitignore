@@ -1,3 +1,5 @@
 *.zip
 *.sum
 bootstrap
+*.pdf
+*.txt

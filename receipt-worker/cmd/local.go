@@ -37,6 +37,8 @@ func main() {
 
 	out, _ := json.MarshalIndent(r, "", "  ")
 	fmt.Println(string(out))
+
+	fmt.Printf("\n--- Valid: %v ---\n", r.Valid())
 }
 
 func extractText(path string) (string, error) {

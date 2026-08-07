@@ -22,7 +22,17 @@ func Parse(raw string) (*Receipt, error) {
 	lines := strings.Split(raw, "\n")
 	for _, p := range parsers {
 		if p.Detect(lines) {
-			return p.Parse(lines, &Receipt{})
+			r, err := p.Parse(lines, &Receipt{})
+			if err != nil {
+				return nil, err
+			}
+			for _, item := range r.Items {
+				r.ItemsTotal += item.TotalValue
+			}
+			r.ItemsTotal = math.Round(r.ItemsTotal*100) / 100
+			expected := r.ItemsTotal - r.CardDiscount
+			r.TotalDiscrepancy = math.Round((r.Total-expected)*100) / 100
+			return r, nil
 		}
 	}
 	return nil, fmt.Errorf("no parser found for receipt")
