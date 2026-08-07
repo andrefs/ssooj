@@ -1,0 +1,46 @@
+                       Test Store
+            Modelo Continente Test Co
+     Rua Teste, 123 4464-000 Teste da Hora
+           Registada CRC Porto sob nº 000000000
+NIF: PT000000000
+               Fatura Simplificada Original
+ Nro:FS ABC003/000003 03/01/2026 12:00 | NIF:PT000000001
+
+IVA    DESCRICAO                                         VALOR
+
+Category X:
+(C) ITEM ONE                                               1,00
+     POUPANCA                                        0,10
+Category Y:
+(C) ITEM TWO
+        2 X 0,50                                      1,00
+Category Z:
+(C) ITEM THREE                                             2,00
+     DESCONTO DIRETO                                  0,20
+Taras:
+NS   DEPOSIT ITEM
+        3 X 0,10                                      0,30
+Category W:
+(A) ITEM FOUR                                              0,99
+
+
+TOTAL A PAGAR                                         5,29
+Cartao Credito                                            5,29
+
+              %IVA         Total Liq.         IVA        Total
+               NS              0,30          0,00         0,30
+(A)          6,00%             0,99          0,06         1,05
+(C)         23,00%             3,70          0,85         4,55
+
+
+      kPiA-Processado por programa certificado N. 0000/AT
+                Cartao cliente nº XXXXXXXX0000X
+            0000 0000 000000 000000 - 000000000000000
+                     ATCUD:TEST-000003
+
+
+           Terminal Pagamento Automático: 00000000
+           COMPRA 4,99€        2026-01-03 12:00:02
+
+
+                          IVA INCLUIDO

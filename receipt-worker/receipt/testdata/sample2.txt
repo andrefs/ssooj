@@ -1,0 +1,53 @@
+                       Test Store
+            Modelo Continente Test Co
+     Rua Teste, 123 4464-000 Teste da Hora
+           Registada CRC Porto sob nº 000000000
+NIF: PT000000000
+               Fatura Simplificada Original
+ Nro:FS ABC002/000002 02/01/2026 11:00 | NIF:PT000000001
+
+IVA DESCRICAO                                             VALOR
+
+Frutas:
+(A) LETTUCE
+        0,500 X 2,00                                        1,00
+(A) TOMATO                                                    0,80
+
+
+TOTAL A PAGAR                                          1,80
+Cartao Credito                                             1,80
+
+              %IVA          Total Liq.           IVA       Total
+(A)         6,00%             1,80             0,11        1,91
+
+
+      pcsT-Processado por programa certificado N. 0000/AT
+                Cartao cliente nº XXXXXXXX0000X
+            0000 0000 000000 000000 - 000000000000000
+                     ATCUD:TEST-000002
+
+
+                           CONTINENTE BOM DIA
+                           TEST STORE
+                           TEST STORE
+           Terminal Pagamento Automático: 00000000
+           00-00-00 00:00:00     Per000 Tr000 Msg000
+                           VISA INTERNACIONAL
+           CARTAO: ****0000      TC:0000000000000000
+              A0000000031010            Visa Debit
+                     COMPRA        1,80€
+           Id.Estab:0000000000 AUT:000000 VISA DB N
+
+                     CAIXA.PARA TODOS
+                     E PARA CADA UM.
+                                     Visa payWave
+                                CÓPIA CLIENTE
+                           PROCESSADO POR SIBS
+
+
+
+
+                          IVA INCLUIDO
+
+
+Ja ganhou com o cartao                                 100,00€

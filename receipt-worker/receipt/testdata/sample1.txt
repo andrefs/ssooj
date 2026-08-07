@@ -1,0 +1,62 @@
+                       Test Store
+            Modelo Continente Test Co
+     Rua Teste, 123 4464-000 Teste da Hora
+           Registada CRC Porto sob nº 000000000
+NIF: PT000000000
+               Fatura Simplificada Original
+ Nro:FS ABC001/000001 01/01/2026 10:00 | NIF:PT000000001
+
+IVA DESCRICAO                                               VALOR
+
+Category A:
+(C) ITEM ONE DESCRIPTION                                   1,00
+(C) ITEM TWO DESCRIPTION                                   2,00
+Category B:
+(A) ITEM THREE DESCRIPTION                                 3,00
+     POUPANCA                                        0,50
+
+SUBTOTAL                                              6,00
+Desconto Cartao Utilizado                                    1,00
+TOTAL A PAGAR                                        5,00
+Cartao Credito                                              5,00
+
+
+Total de descontos e poupancas                               0,50
+
+              %IVA        Total Liq.         IVA            Total
+(A)          6,00%            3,00          0,18             3,18
+(C)         23,00%            3,00          0,69             3,69
+
+
+      eTjA-Processado por programa certificado N. 0000/AT
+                Cartao cliente nº XXXXXXXX0000X
+            0000 0000 0000 000000 - 000000000000000
+                     ATCUD:TEST-000001
+
+
+                           CONTINENTE BOM DIA
+                           TEST STORE
+                           TEST STORE
+           Terminal Pagamento Automático: 00000000
+           00-00-00 00:00:00     Per000 Tr000 Msg000
+                           VISA INTERNACIONAL
+           CARTAO: ****0000      TC:0000000000000000
+              A0000000031010            Visa Debit
+                     COMPRA       5,00€
+           Id.Estab:0000000000 AUT:000000 VISA DB N
+
+                     CAIXA.PARA TODOS
+                     E PARA CADA UM.
+
+                                 Visa payWave
+                                CÓPIA CLIENTE
+                           PROCESSADO POR SIBS
+
+
+
+
+                          IVA INCLUIDO
+
+
+UTILIZOU DO SEU CARTAO                                   1,00€
+Ja ganhou com o cartao                                 100,00€

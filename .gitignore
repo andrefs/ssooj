@@ -2,6 +2,7 @@
 bootstrap
 *.pdf
 *.txt
+!receipt-worker/receipt/testdata/*.txt
 *.zip
 
 # Terraform
