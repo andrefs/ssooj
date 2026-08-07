@@ -29,6 +29,7 @@ type Receipt struct {
 	PaymentMethod    string
 	Total            float64
 	ItemsTotal       float64
+	ItemSavings      float64
 	CardDiscount     float64
 	TotalDiscrepancy float64
 	SavingCardUsed   bool

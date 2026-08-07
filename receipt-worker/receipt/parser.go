@@ -28,8 +28,10 @@ func Parse(raw string) (*Receipt, error) {
 			}
 			for _, item := range r.Items {
 				r.ItemsTotal += item.TotalValue
+				r.ItemSavings += item.Savings
 			}
 			r.ItemsTotal = math.Round(r.ItemsTotal*100) / 100
+			r.ItemSavings = math.Round(r.ItemSavings*100) / 100
 			expected := r.ItemsTotal - r.CardDiscount
 			r.TotalDiscrepancy = math.Round((r.Total-expected)*100) / 100
 			return r, nil
