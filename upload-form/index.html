@@ -149,6 +149,13 @@
       <p>Drop PDF files below to process them</p>
     </div>
 
+    <div style="margin-bottom: 20px;">
+      <label for="endpoint">API Endpoint</label>
+      <input type="url" id="endpoint" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;"
+        placeholder="https://xxxxx.execute-api.region.amazonaws.com/upload"
+        value="https://API_ID.execute-api.eu-west-1.amazonaws.com/upload">
+    </div>
+
     <div class="drop-zone" id="dropZone">
       <div class="drop-zone-icon">&#x1F4C4;</div>
       <div class="drop-zone-text">Drag & drop PDFs here, or <span>choose files</span></div>
@@ -164,13 +171,18 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const API_ENDPOINT = 'https://API_ID.execute-api.eu-west-1.amazonaws.com/upload';
-
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const fileList = document.getElementById('fileList');
     const uploadBtn = document.getElementById('uploadBtn');
     const toast = document.getElementById('toast');
+    const endpointInput = document.getElementById('endpoint');
+
+    function getEndpoint() {
+      let url = endpointInput.value.trim();
+      if (!url) url = endpointInput.placeholder;
+      return url.replace(/\/+$/, '');
+    }
 
     let files = [];
 
@@ -248,7 +260,7 @@
         renderFileList();
 
         try {
-          const presignResp = await fetch(`${API_ENDPOINT}?name=${encodeURIComponent(f.file.name)}`, { method: 'POST' });
+          const presignResp = await fetch(`${getEndpoint()}?name=${encodeURIComponent(f.file.name)}`, { method: 'POST' });
           if (!presignResp.ok) throw new Error(`Presign failed (${presignResp.status})`);
 
           const { uploadUrl } = await presignResp.json();
