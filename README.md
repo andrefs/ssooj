@@ -1,5 +1,11 @@
 # ssooj -- Supermarket Receipt PDF Parser
 
+> **Disclaimer:** This is a wildly overengineered solution for extracting
+> data from supermarket receipts. Instead of reading the PDF with your
+> eyes and typing the numbers into a spreadsheet, we built an
+> event-driven serverless pipeline spanning S3, SQS, Lambda, DynamoDB,
+> API Gateway, and Terraform. But it works.
+
 Extracts structured data from supermarket receipt PDFs and writes
 it to CSV (S3) and DynamoDB.
 
