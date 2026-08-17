@@ -12,3 +12,7 @@ infrastructure/artifacts/
 
 # Lambda layer
 infrastructure/layer/
+
+# Upload form
+upload-form/.env
+upload-form/dist/

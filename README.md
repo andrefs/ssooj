@@ -64,6 +64,40 @@ The script checks prerequisites, builds the Go binaries, extracts `pdftotext`
 from an Amazon Linux 2023 Docker image, packages it as a Lambda layer, and
 runs `terraform apply` to create all resources.
 
+## Web Upload Form
+
+`upload-form/` contains a static HTML page for uploading receipts from a
+browser (drag-and-drop, multi-file). It is generated from a template so the
+API Gateway ID is baked in at build time instead of being committed.
+
+```bash
+cd upload-form
+
+# 1. Configure the API ID (not committed, see .env.example)
+cp .env.example .env
+# edit .env and set API_ID=<your api id>
+
+# 2. Generate the page
+go run ./gen   # writes dist/index.html
+```
+
+The generator fails if `API_ID` is missing or still the placeholder.
+
+### Deploying to Komodo
+
+The `upload-form/Dockerfile` is a multi-stage build that runs the generator
+inside the build and serves the page with nginx. Build it with the `.env`
+passed as a BuildKit secret so the API ID never lands in an image layer or
+in git:
+
+```bash
+cd upload-form
+docker build --secret id=ssooj_env,src=.env -t ssooj-upload .
+```
+
+On Komodo, point a service at the `upload-form/` directory and configure the
+build secret `ssooj_env` with your `.env` contents.
+
 ## Upload a Receipt
 
 ```bash
@@ -113,6 +147,10 @@ ssooj/
   infrastructure/        Terraform definitions
     main.tf              21 AWS resources
     build-layer.sh       Builds poppler-utils Lambda layer from AL2023
+  upload-form/           Static upload page (browser)
+    index.tmpl.html      Page template (API ID placeholder)
+    gen/                 Go generator: reads .env, renders dist/index.html
+    Dockerfile           nginx image; runs generator at build time
   deploy.sh              One-command deploy
 ```
 
