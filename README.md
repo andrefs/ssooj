@@ -32,7 +32,7 @@ Upload PDF --[API Gateway]--> Presign URL Lambda (Go)
                           User uploads PDF directly to S3
                                     |
                           S3 event -> SQS -> Worker Lambda (Go + pdftotext)
-                                    |
+                                    |        SHA-256 dedup claim (DynamoDB)
                           CSV in S3 + DynamoDB item
 ```
 
@@ -121,6 +121,9 @@ aws s3 ls s3://ssooj-receipts-processed-*/csv/ --recursive
 
 # DynamoDB items
 aws dynamodb scan --table-name ssooj-receipts
+
+# Hashes claimed for dedup (one per unique receipt PDF)
+aws dynamodb scan --table-name ssooj-receipt-hashes
 ```
 
 ## Local Development
