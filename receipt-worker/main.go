@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -24,6 +27,7 @@ type env struct {
 	RawBucket      string
 	ProcessedBucket string
 	DynamoTable    string
+	HashTable      string
 }
 
 func loadEnv() env {
@@ -31,6 +35,7 @@ func loadEnv() env {
 		RawBucket:       os.Getenv("RAW_BUCKET"),
 		ProcessedBucket: os.Getenv("PROCESSED_BUCKET"),
 		DynamoTable:     os.Getenv("DYNAMO_TABLE"),
+		HashTable:       os.Getenv("HASH_TABLE"),
 	}
 }
 
@@ -47,7 +52,7 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	dw := &store.DynamoWriter{Client: ddbClient, Table: e.DynamoTable}
 
 	for _, msg := range sqsEvent.Records {
-		if err := processMessage(ctx, msg, e, s3Client, dw); err != nil {
+		if err := processMessage(ctx, msg, e, s3Client, ddbClient, dw); err != nil {
 			log.Printf("ERROR processing message %s: %v", msg.MessageId, err)
 			return err
 		}
@@ -56,7 +61,7 @@ func handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 	return nil
 }
 
-func processMessage(ctx context.Context, msg events.SQSMessage, e env, s3Client *s3.Client, dw *store.DynamoWriter) error {
+func processMessage(ctx context.Context, msg events.SQSMessage, e env, s3Client *s3.Client, ddbClient *dynamodb.Client, dw *store.DynamoWriter) error {
 	var s3Event events.S3Event
 	if err := json.Unmarshal([]byte(msg.Body), &s3Event); err != nil {
 		return fmt.Errorf("unmarshal S3 event: %w", err)
@@ -68,32 +73,52 @@ func processMessage(ctx context.Context, msg events.SQSMessage, e env, s3Client 
 
 		log.Printf("processing s3://%s/%s", bucket, key)
 
-		text, err := extractText(ctx, s3Client, bucket, key)
+		text, contentHash, err := extractText(ctx, s3Client, bucket, key)
 		if err != nil {
 			return fmt.Errorf("extract text from %s: %w", key, err)
 		}
 
-		r, err := receipt.Parse(text)
+		claimed, err := claimHash(ctx, ddbClient, e.HashTable, contentHash)
 		if err != nil {
-			return fmt.Errorf("parse receipt from %s: %w", key, err)
+			return fmt.Errorf("claim hash for %s: %w", key, err)
+		}
+		if !claimed {
+			log.Printf("skipping %s: duplicate receipt (hash %s)", key, contentHash)
+			continue
 		}
 
-		log.Printf("parsed: store=%s date=%s items=%d total=%.2f valid=%v",
-			r.Store, r.Date, len(r.Items), r.Total, r.Valid())
-
-		if err := storeCSV(ctx, s3Client, e.ProcessedBucket, key, r); err != nil {
-			return fmt.Errorf("store csv: %w", err)
-		}
-
-		if err := dw.Write(ctx, r); err != nil {
-			return fmt.Errorf("store dynamo: %w", err)
+		if err := process(ctx, s3Client, e, dw, key, text); err != nil {
+			if relErr := releaseHash(ctx, ddbClient, e.HashTable, contentHash); relErr != nil {
+				log.Printf("ERROR releasing claim for %s: %v", key, relErr)
+			}
+			return fmt.Errorf("process %s: %w", key, err)
 		}
 	}
 
 	return nil
 }
 
-func extractText(ctx context.Context, s3Client *s3.Client, bucket, key string) (string, error) {
+func process(ctx context.Context, s3Client *s3.Client, e env, dw *store.DynamoWriter, key, text string) error {
+	r, err := receipt.Parse(text)
+	if err != nil {
+		return fmt.Errorf("parse receipt from %s: %w", key, err)
+	}
+
+	log.Printf("parsed: store=%s date=%s items=%d total=%.2f valid=%v",
+		r.Store, r.Date, len(r.Items), r.Total, r.Valid())
+
+	if err := storeCSV(ctx, s3Client, e.ProcessedBucket, key, r); err != nil {
+		return fmt.Errorf("store csv: %w", err)
+	}
+
+	if err := dw.Write(ctx, r); err != nil {
+		return fmt.Errorf("store dynamo: %w", err)
+	}
+
+	return nil
+}
+
+func extractText(ctx context.Context, s3Client *s3.Client, bucket, key string) (string, string, error) {
 	tmpDir := "/tmp"
 	pdfPath := filepath.Join(tmpDir, "receipt.pdf")
 	txtPath := pdfPath + ".txt"
@@ -103,20 +128,23 @@ func extractText(ctx context.Context, s3Client *s3.Client, bucket, key string) (
 		Key:    &key,
 	})
 	if err != nil {
-		return "", fmt.Errorf("s3 get: %w", err)
+		return "", "", fmt.Errorf("s3 get: %w", err)
 	}
 	defer result.Body.Close()
 
 	out, err := os.Create(pdfPath)
 	if err != nil {
-		return "", fmt.Errorf("create tmp file: %w", err)
+		return "", "", fmt.Errorf("create tmp file: %w", err)
 	}
 	defer out.Close()
 
-	if _, err := out.ReadFrom(result.Body); err != nil {
-		return "", fmt.Errorf("write tmp file: %w", err)
+	h := sha256.New()
+	if _, err := out.ReadFrom(io.TeeReader(result.Body, h)); err != nil {
+		return "", "", fmt.Errorf("write tmp file: %w", err)
 	}
 	out.Close()
+
+	contentHash := hex.EncodeToString(h.Sum(nil))
 
 	pdftotextBin := "/opt/bin/pdftotext"
 	if _, err := os.Stat(pdftotextBin); os.IsNotExist(err) {
@@ -124,15 +152,15 @@ func extractText(ctx context.Context, s3Client *s3.Client, bucket, key string) (
 	}
 	cmd := exec.Command(pdftotextBin, "-layout", pdfPath, txtPath)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("pdftotext: %s: %w", string(output), err)
+		return "", "", fmt.Errorf("pdftotext: %s: %w", string(output), err)
 	}
 
 	data, err := os.ReadFile(txtPath)
 	if err != nil {
-		return "", fmt.Errorf("read output: %w", err)
+		return "", "", fmt.Errorf("read output: %w", err)
 	}
 
-	return string(data), nil
+	return string(data), contentHash, nil
 }
 
 func storeCSV(ctx context.Context, s3Client *s3.Client, bucket, key string, r *receipt.Receipt) error {
