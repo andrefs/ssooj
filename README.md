@@ -41,7 +41,9 @@ Upload PDF --[API Gateway]--> Presign URL Lambda (Go)
 - **Worker Lambda** (`receipt-worker/`): Triggered by SQS when a new PDF lands
   in the raw bucket. Downloads the PDF, runs `pdftotext -layout`, parses the
   receipt text, and writes a CSV row per item to S3 plus a full receipt item
-  to DynamoDB.
+  to DynamoDB. Computes a SHA-256 of the PDF while downloading and atomically
+  claims it in the `ssooj-receipt-hashes` DynamoDB table, so re-uploaded
+  duplicates are skipped instead of processed twice.
 - **Infrastructure** (`infrastructure/`): Terraform definitions for S3, SQS,
   DynamoDB, IAM, Lambda functions, API Gateway, and the poppler-utils layer.
 
@@ -141,11 +143,12 @@ ssooj/
   presign-url/           Go Lambda -- presigned upload URL
   receipt-worker/        Go Lambda -- receipt parsing + storage
     main.go              SQS handler, PDF download, pdftotext, parse, store
+    dedup.go             SHA-256 content hash claim (ssooj-receipt-hashes)
     receipt/             Types, parser registry, Continente parser
     store/               CSV and DynamoDB writers
     cmd/local.go         Local test runner
   infrastructure/        Terraform definitions
-    main.tf              21 AWS resources
+    main.tf              30 AWS resources
     build-layer.sh       Builds poppler-utils Lambda layer from AL2023
   upload-form/           Static upload page (browser)
     index.tmpl.html      Page template (API ID placeholder)

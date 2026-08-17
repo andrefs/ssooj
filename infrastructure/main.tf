@@ -83,6 +83,16 @@ resource "aws_dynamodb_table" "receipts" {
   }
 }
 
+resource "aws_dynamodb_table" "hashes" {
+  name         = "ssooj-receipt-hashes"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "content_hash"
+  attribute {
+    name = "content_hash"
+    type = "S"
+  }
+}
+
 # ── IAM: presign URL Lambda role ────────────────────────────────────────
 
 resource "aws_iam_role" "presign" {
@@ -156,6 +166,11 @@ resource "aws_iam_role_policy" "worker" {
         Effect = "Allow"
         Action = ["dynamodb:PutItem"]
         Resource = aws_dynamodb_table.receipts.arn
+      },
+      {
+        Effect = "Allow"
+        Action = ["dynamodb:PutItem"]
+        Resource = aws_dynamodb_table.hashes.arn
       },
       {
         Effect = "Allow"
@@ -265,6 +280,7 @@ resource "aws_lambda_function" "worker" {
       RAW_BUCKET       = aws_s3_bucket.raw.id
       PROCESSED_BUCKET = aws_s3_bucket.processed.id
       DYNAMO_TABLE     = aws_dynamodb_table.receipts.name
+      HASH_TABLE       = aws_dynamodb_table.hashes.name
     }
   }
   depends_on = [aws_lambda_layer_version.poppler]
