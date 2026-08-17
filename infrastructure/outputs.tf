@@ -25,3 +25,7 @@ output "presign_function" {
 output "worker_function" {
   value = aws_lambda_function.worker.function_name
 }
+
+output "csv_endpoint" {
+  value = "${aws_apigatewayv2_api.upload.api_endpoint}/csv"
+}
