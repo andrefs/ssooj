@@ -9,10 +9,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: "1.25"
           cache-dependency-path: |
             presign-url/go.sum
             receipt-worker/go.sum
+            csv-lister/go.sum
       - name: Build presign-url
         working-directory: presign-url
         run: go build ./...
@@ -22,3 +23,6 @@ jobs:
       - name: Unit tests
         working-directory: receipt-worker
         run: go test ./... -v -count=1
+      - name: Build csv-lister
+        working-directory: csv-lister
+        run: go build ./...

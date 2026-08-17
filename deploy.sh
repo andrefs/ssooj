@@ -36,6 +36,11 @@ cd receipt-worker
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap .
 cd ..
 
+echo "=== Building csv-lister Lambda ==="
+cd csv-lister
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bootstrap .
+cd ..
+
 echo "=== Building poppler-utils Lambda layer ==="
 cd infrastructure
 bash build-layer.sh

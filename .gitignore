@@ -1,5 +1,6 @@
 # Lambda build artifacts
 bootstrap
+csv-lister/csv-lister
 *.pdf
 *.txt
 !receipt-worker/receipt/testdata/*.txt
